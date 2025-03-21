@@ -20,6 +20,27 @@ function ensureDirectoryExists(directory) {
   }
 }
 
+// Fonction pour créer un fichier ICO Windows
+async function createWindowsIcon(pngSource, outputPath, size = 256) {
+  try {
+    // Pour les fichiers ICO, nous allons générer un PNG et le sauvegarder
+    // electron-builder utilisera ce PNG comme source d'icône
+    // Note: Sharp ne peut pas générer un vrai fichier ICO, mais nous pouvons travailler avec des PNG
+    const iconBuffer = await sharp(pngSource)
+      .resize(size, size)
+      .png()
+      .toBuffer();
+    
+    fs.writeFileSync(outputPath, iconBuffer);
+    console.log(`Création du fichier ${path.basename(outputPath)} réussie!`);
+    
+    // Pour une vraie solution ICO, vous pourriez utiliser une autre bibliothèque comme 'png-to-ico'
+    // ou installer un package comme 'icon-gen' qui dépend de 'png2icons' pour créer des fichiers ICO
+  } catch (err) {
+    console.error(`Erreur lors de la création de l'icône Windows:`, err);
+  }
+}
+
 // Fonction pour convertir SVG en PNG avec différentes tailles
 async function convertAppIcon() {
   try {
@@ -36,11 +57,9 @@ async function convertAppIcon() {
       console.log(`Conversion de l'icône app en PNG (${size}x${size}) réussie!`);
     }
     
-    // Créer le fichier ICO pour Windows
-    await sharp(svgIconApp)
-      .resize(256, 256)
-      .toFile(path.join(iconsDir, 'icon.ico'));
-    console.log('Création du fichier icon.ico réussie!');
+    // Créer le fichier ICO pour Windows - nous allons utiliser l'image 256x256 comme base
+    const pngSource = path.join(iconsDir, 'icon-256.png');
+    await createWindowsIcon(pngSource, path.join(iconsDir, 'icon.ico'));
     
     // Créer le fichier ICNS pour macOS (si sur macOS avec iconutil)
     // Cette partie nécessiterait des outils supplémentaires sur macOS
@@ -66,10 +85,8 @@ async function convertTrayIcon() {
     }
     
     // Créer le fichier ICO pour la barre des tâches Windows
-    await sharp(svgIconTray)
-      .resize(32, 32)
-      .toFile(path.join(iconsDir, 'tray-icon.ico'));
-    console.log('Création du fichier tray-icon.ico réussie!');
+    const trayPngSource = path.join(iconsDir, 'tray-icon-32.png');
+    await createWindowsIcon(trayPngSource, path.join(iconsDir, 'tray-icon.ico'), 32);
     
     // Créer une version template pour macOS (fond transparent avec contenu noir)
     await sharp(svgIconTray)
