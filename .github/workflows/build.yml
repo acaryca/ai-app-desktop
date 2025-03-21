@@ -39,17 +39,20 @@ jobs:
       - name: Generate icons
         run: npm run make-icon
         
-      # Étape supplémentaire pour Windows - Alternative de conversion d'icône si nécessaire
-      - name: Fix Windows Icon (Fallback)
+      # Solution directe pour l'icône Windows
+      - name: Create Windows Icon with png-to-ico
         if: matrix.os == 'windows-latest'
         run: |
-          if [ ! -f "app/icons/icon.ico" ] || [ ! -s "app/icons/icon.ico" ]; then
-            npm install -g png-to-ico
-            png-to-ico app/icons/icon-256.png > app/icons/icon-fixed.ico
-            mv app/icons/icon-fixed.ico app/icons/icon.ico
-            echo "Fixed icon using png-to-ico"
+          npm install -g png-to-ico
+          # Créer une icône Windows valide à partir du PNG
+          png-to-ico app/icons/icon-256.png > app/icons/icon.ico
+          # Vérifier que l'icône est valide
+          if [ -f "app/icons/icon.ico" ] && [ -s "app/icons/icon.ico" ]; then
+            echo "Icône Windows créée avec succès"
+            ls -la app/icons/icon.ico
           else
-            echo "Using existing icon.ico"
+            echo "Échec de création de l'icône Windows"
+            exit 1
           fi
         shell: bash
         
