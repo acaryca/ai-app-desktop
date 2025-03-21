@@ -1,0 +1,85 @@
+{
+  "name": "ai-app-desktop",
+  "productName": "AI",
+  "description": "Floating AI chat from ACARY in Electron for seamless conversations.",
+  "version": "1.0.0",
+  "main": "app/main.js",
+  "author": {
+    "name": "ACARY",
+    "email": "support@acary.ca"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "package": "electron-builder --win --x64",
+    "package:win": "electron-builder --win --x64",
+    "package:linux": "electron-builder --linux --x64",
+    "package:mac": "electron-builder --mac --x64",
+    "make-icon": "node dev/icon/make-icon.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/acaryca/ai-app-desktop.git"
+  },
+  "keywords": [
+    "chat",
+    "ai",
+    "desktop"
+  ],
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/acaryca/ai-app-desktop/issues"
+  },
+  "homepage": "https://github.com/acaryca/ai-app-desktop#readme",
+  "dependencies": {
+    "electron-store": "^10.0.1",
+    "electron-updater": "^6.2.1"
+  },
+  "build": {
+    "appId": "ca.acary.ai-app-desktop",
+    "productName": "AI",
+    "files": [
+      "app/**/*",
+      "!**/.git/**",
+      "!**/.vscode/**",
+      "!**/.idea/**"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "acaryca",
+        "repo": "ai-app-desktop"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "app/icons/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "app/icons/icon.png",
+      "category": "Utility"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "app/icons/icon.icns",
+      "category": "public.app-category.utilities",
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "format": "UDBZ"
+    }
+  },
+  "devDependencies": {
+    "electron": "^35.0.3",
+    "electron-builder": "^24.13.3",
+    "sharp": "^0.33.5"
+  }
+}
