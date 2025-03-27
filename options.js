@@ -143,6 +143,10 @@ const getTrayMenuTemplate = (isAlwaysOnTop, animationsEnabled, openAtStartup) =>
     click: 'open-window'
   },
   { 
+    label: 'Vérifier les mises à jour', 
+    click: 'check-updates'
+  },
+  { 
     label: 'Toujours au premier plan', 
     type: 'checkbox',
     checked: isAlwaysOnTop,

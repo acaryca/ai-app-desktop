@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Tray, Menu, screen, MenuItem, ipcMain, shell, dialog } = require('electron');
 const path = require('path');
 const options = require('./options'); // Importer le module options
+const { autoUpdater } = require('electron-updater');
 
 // Définir le nom de l'application
 app.name = 'AI';
@@ -45,6 +46,9 @@ async function init() {
     
     // Configurer la gestion du déplacement de la fenêtre
     setupWindowDrag();
+    
+    // Configurer les mises à jour automatiques
+    setupAutoUpdater();
   } catch (error) {
     console.error('Erreur lors de l\'initialisation:', error);
   }
@@ -293,6 +297,10 @@ function createTray(store) {
         console.log('Fenêtre réinitialisée - Dimensions:', options.DEFAULT_WINDOW_SIZE, 'Position:', newPosition);
       }
     },
+    'check-updates': () => {
+      // Vérifier les mises à jour manuellement (avec message si pas de mise à jour)
+      checkForUpdates(true);
+    },
     'quit-app': () => {
       isQuitting = true;
       app.quit();
@@ -451,4 +459,130 @@ function setAutoLaunch(enable) {
     // Cela pourrait nécessiter des privilèges ou l'utilisation d'un package externe
     console.log('Configuration du démarrage automatique sur Linux non implémentée');
   }
+}
+
+// Configuration de la mise à jour automatique
+function setupAutoUpdater() {
+  // Configurer le serveur de mise à jour (GitHub par défaut)
+  autoUpdater.logger = require('electron-log');
+  autoUpdater.logger.transports.file.level = 'info';
+  
+  // Événements de mise à jour
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Vérification des mises à jour...');
+  });
+  
+  autoUpdater.on('update-available', (info) => {
+    console.log('Mise à jour disponible:', info);
+    showUpdateNotification(info);
+  });
+  
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('Aucune mise à jour disponible', info);
+    dialog.showMessageBox({
+      title: 'Mise à jour',
+      message: 'Vous utilisez la dernière version de l\'application.',
+      buttons: ['OK']
+    });
+  });
+  
+  autoUpdater.on('error', (err) => {
+    console.error('Erreur lors de la mise à jour:', err);
+    dialog.showErrorBox(
+      'Erreur de mise à jour', 
+      `Une erreur s'est produite lors de la vérification des mises à jour: ${err.message}`
+    );
+  });
+  
+  autoUpdater.on('download-progress', (progressObj) => {
+    let message = `Vitesse: ${progressObj.bytesPerSecond} - Téléchargé ${progressObj.percent}%`;
+    console.log(message);
+    // On pourrait ajouter une barre de progression ici
+  });
+  
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Mise à jour téléchargée:', info);
+    // Proposer d'installer maintenant
+    dialog.showMessageBox({
+      title: 'Installation de la mise à jour',
+      message: 'La mise à jour a été téléchargée. Voulez-vous redémarrer l\'application pour l\'installer ?',
+      buttons: ['Redémarrer', 'Plus tard']
+    }).then((returnValue) => {
+      if (returnValue.response === 0) {
+        isQuitting = true;
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+  
+  // Vérifier les mises à jour automatiquement au démarrage (après un délai)
+  setTimeout(() => {
+    checkForUpdates(false);
+  }, 5000); // Attendre 5 secondes après le démarrage
+}
+
+// Vérifier les mises à jour
+function checkForUpdates(showNoUpdateMessage = true) {
+  // Sauvegarder la valeur précédente
+  const previousShowNoUpdateMessage = autoUpdater.autoDownload;
+  
+  // Si showNoUpdateMessage est false, éviter de montrer le message si aucune mise à jour n'est disponible
+  if (!showNoUpdateMessage) {
+    autoUpdater.removeAllListeners('update-not-available');
+    autoUpdater.on('update-not-available', (info) => {
+      console.log('Aucune mise à jour disponible (silencieux)', info);
+    });
+  }
+  
+  // Définir autoDownload à true pour télécharger automatiquement les mises à jour
+  autoUpdater.autoDownload = true;
+  
+  try {
+    autoUpdater.checkForUpdatesAndNotify();
+  } catch (error) {
+    console.error('Erreur lors de la vérification des mises à jour:', error);
+    if (showNoUpdateMessage) {
+      dialog.showErrorBox(
+        'Erreur de mise à jour', 
+        `Une erreur s'est produite lors de la vérification des mises à jour: ${error.message}`
+      );
+    }
+  }
+  
+  // Rétablir les écouteurs d'événements si nécessaire
+  if (!showNoUpdateMessage) {
+    setTimeout(() => {
+      // Supprimer l'écouteur silencieux
+      autoUpdater.removeAllListeners('update-not-available');
+      
+      // Rétablir l'écouteur standard
+      autoUpdater.on('update-not-available', (info) => {
+        console.log('Aucune mise à jour disponible', info);
+        if (showNoUpdateMessage) {
+          dialog.showMessageBox({
+            title: 'Mise à jour',
+            message: 'Vous utilisez la dernière version de l\'application.',
+            buttons: ['OK']
+          });
+        }
+      });
+    }, 1000);
+  }
+}
+
+// Afficher une notification de mise à jour disponible
+function showUpdateNotification(info) {
+  const dialogOpts = {
+    type: 'info',
+    buttons: ['Télécharger', 'Plus tard'],
+    title: 'Mise à jour disponible',
+    message: `Une nouvelle version (${info.version}) est disponible.`,
+    detail: 'Une nouvelle version est prête à être téléchargée. Voulez-vous la télécharger maintenant ?'
+  };
+  
+  dialog.showMessageBox(dialogOpts).then((returnValue) => {
+    if (returnValue.response === 0) {
+      // L'utilisateur a choisi de télécharger, nous laissons l'autoUpdater continuer
+    }
+  });
 }

@@ -33,7 +33,9 @@
   },
   "homepage": "https://github.com/acaryca/ai-app-desktop#readme",
   "dependencies": {
-    "electron-store": "^10.0.1"
+    "electron-log": "^5.3.3",
+    "electron-store": "^10.0.1",
+    "electron-updater": "^6.6.2"
   },
   "build": {
     "appId": "ca.acary.app.ai.chat",
@@ -62,7 +64,14 @@
     },
     "dmg": {
       "format": "UDBZ"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "acaryca",
+        "repo": "ai-app-desktop"
+      }
+    ]
   },
   "devDependencies": {
     "electron": "^29.1.0",
