@@ -9,7 +9,7 @@ An Electron application that adds an icon to the Windows system tray and opens a
 - Node.js 16.x or later (for development)
 
 ### Download and Install
-1. Go to the [Releases](https://github.com/yourusername/ai-app-desktop/releases) page
+1. Go to the [Releases](https://github.com/acaryca/ai-app-desktop/releases) page
 2. Download the appropriate installer for your platform:
    - Windows: `.exe` installer
    - Linux: `.AppImage` or `.deb` package
@@ -21,7 +21,7 @@ An Electron application that adds an icon to the Windows system tray and opens a
 If you want to build the application from source:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/ai-app-desktop.git
+   git clone https://github.com/acaryca/ai-app-desktop.git
    cd ai-app-desktop
    ```
 2. Install dependencies:

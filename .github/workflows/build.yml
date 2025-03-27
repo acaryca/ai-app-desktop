@@ -1,8 +1,8 @@
 name: Build Electron App
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
 
@@ -32,19 +32,12 @@ jobs:
 
     - name: Get version from package.json
       id: version
-      shell: pwsh
       run: |
-        $packageJson = Get-Content -Path package.json -Raw | ConvertFrom-Json
-        $version = $packageJson.version
-        $buildNumber = "${{ github.run_number }}"
-        $versionTag = "$version-$buildNumber"
-        if ("${{ runner.os }}" -eq "Windows") {
-          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
-          echo "VERSION_TAG=$versionTag" >> $env:GITHUB_OUTPUT
-        } else {
-          echo "VERSION=$version" >> $GITHUB_OUTPUT
-          echo "VERSION_TAG=$versionTag" >> $GITHUB_OUTPUT
-        }
+        VERSION=$(node -p "require('./package.json').version")
+        BUILD_NUMBER="${{ github.run_number }}"
+        VERSION_TAG="$VERSION-$BUILD_NUMBER"
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
 
     - name: Install dependencies
       run: npm ci
@@ -147,6 +140,23 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
           
+      - name: Get commit history since last release
+        id: commit_history
+        shell: bash
+        run: |
+          # Get the last release tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            # If no previous tag exists, get all commits
+            COMMIT_HISTORY=$(git log --pretty=format:"- %s (%h)" | cat)
+          else
+            # Get commits since last tag
+            COMMIT_HISTORY=$(git log --pretty=format:"- %s (%h)" $LAST_TAG..HEAD | cat)
+          fi
+          echo "COMMIT_HISTORY<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_HISTORY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -161,7 +171,24 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.VERSION_TAG }}
-          name: ACARY AI App - Release ${{ steps.version.outputs.VERSION_TAG }}
+          name: v${{ steps.version.outputs.VERSION }}
+          body: |
+            ### Build Information
+            - Build Number: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Date: ${{ github.event.head_commit.timestamp }}
+            
+            ### Changes
+            ${{ steps.commit_history.outputs.COMMIT_HISTORY }}
+            
+            ### Installation
+            Choose the appropriate installer for your operating system:
+            - Windows: `.exe` installer
+            - macOS: `.dmg` and `.zip` archives
+            - Linux: `.AppImage`, `.deb`, and `.rpm` packages
+            
+            ### Support
+            For support or to report issues, please visit our GitHub repository.
           files: release-files/*
           draft: false
           prerelease: false
