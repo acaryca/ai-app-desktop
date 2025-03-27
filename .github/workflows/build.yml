@@ -32,12 +32,22 @@ jobs:
 
     - name: Get version from package.json
       id: version
+      shell: bash
       run: |
-        VERSION=$(node -p "require('./package.json').version")
-        BUILD_NUMBER="${{ github.run_number }}"
-        VERSION_TAG="$VERSION-$BUILD_NUMBER"
-        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-        echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
+        # Extract the version from the git tag (remove 'v' prefix)
+        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version from tag: $VERSION"
+        else
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUMBER="${{ github.run_number }}"
+          VERSION_TAG="$VERSION-$BUILD_NUMBER"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
+          echo "Using version from package.json: $VERSION"
+        fi
 
     - name: Install dependencies
       run: npm ci
@@ -124,7 +134,7 @@ jobs:
         
   release:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -134,11 +144,20 @@ jobs:
         id: version
         shell: bash
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          BUILD_NUMBER="${{ github.run_number }}"
-          VERSION_TAG="$VERSION-$BUILD_NUMBER"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
+          # Extract the version from the git tag (remove 'v' prefix)
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "Using version from tag: $VERSION"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            BUILD_NUMBER="${{ github.run_number }}"
+            VERSION_TAG="$VERSION-$BUILD_NUMBER"
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
+            echo "Using version from package.json: $VERSION"
+          fi
           
       - name: Get commit history since last release
         id: commit_history
@@ -170,8 +189,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ steps.version.outputs.VERSION_TAG }}
-          name: v${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           body: |
             ### Build Information
             - Build Number: ${{ github.run_number }}
