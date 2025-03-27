@@ -106,6 +106,7 @@ jobs:
       with:
         name: ai-win-app-windows-${{ steps.version.outputs.VERSION_TAG }}
         path: dist/*.exe
+        retention-days: 1
 
     - name: Upload Linux artifacts
       if: runner.os == 'Linux'
@@ -116,6 +117,7 @@ jobs:
           dist/*.AppImage
           dist/*.deb
           dist/*.rpm
+        retention-days: 1
 
     - name: Upload macOS artifacts
       if: runner.os == 'macOS'
@@ -125,6 +127,7 @@ jobs:
         path: |
           dist/*.dmg
           dist/*.zip
+        retention-days: 1
         
   release:
     needs: build
