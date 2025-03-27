@@ -171,4 +171,5 @@ jobs:
       - name: Delete artifacts
         if: always()
         run: |
+          echo "Deleting artifacts"
           rm -rf all-artifacts release-files 

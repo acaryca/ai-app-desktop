@@ -28,22 +28,14 @@ If you want to build the application from source:
    ```bash
    npm install
    ```
-3. Start the development server:
+3. Start the app:
    ```bash
-   npm run dev
+   npm run start
    ```
 4. Build the application:
    ```bash
    npm run build
    ```
-
-## Features
-
-- System tray icon in Windows
-- Opens a window displaying `localhost:3000/chat` when clicking the icon
-- Context menu with "Open" and "Quit" options
-- Window automatically positions itself in the bottom right corner of the screen
-- Application continues running in the background when the window is closed
 
 ## Contributing
 
