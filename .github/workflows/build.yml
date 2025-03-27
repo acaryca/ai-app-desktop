@@ -166,4 +166,9 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete artifacts
+        if: always()
+        run: |
+          rm -rf all-artifacts release-files 
