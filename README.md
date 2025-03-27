@@ -1,6 +1,6 @@
 # AI App Desktop
 
-An Electron application that adds an icon to the Windows system tray and opens a window displaying the ai chat when clicked.
+A sleek app that adds an icon to your Windows system tray for instant access to seamless AI chat conversations. Engage effortlessly with cutting-edge AI right at your fingertips!
 
 ## Installation
 
