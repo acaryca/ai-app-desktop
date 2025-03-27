@@ -2,7 +2,7 @@
   "name": "ai-app-desktop",
   "productName": "AI Chat",
   "description": "AI Chat by ACARY",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "main": "main.js",
   "author": {
     "name": "ACARY",
