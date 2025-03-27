@@ -2,16 +2,33 @@ name: Build Electron App
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [created]
 
 permissions:
   contents: write
   packages: read
 
 jobs:
+  update-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Release with Processing Message
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          name: ${{ github.event.release.name }}
+          body: |
+            ### Files are being generated...
+            
+            Please wait while installers are being prepared for all platforms.
+          draft: false
+          prerelease: ${{ github.event.release.prerelease }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build:
+    needs: update-release
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -134,7 +151,6 @@ jobs:
         
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -144,20 +160,11 @@ jobs:
         id: version
         shell: bash
         run: |
-          # Extract the version from the git tag (remove 'v' prefix)
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION="${{ github.ref_name }}"
-            VERSION="${VERSION#v}"
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "Using version from tag: $VERSION"
-          else
-            VERSION=$(node -p "require('./package.json').version")
-            BUILD_NUMBER="${{ github.run_number }}"
-            VERSION_TAG="$VERSION-$BUILD_NUMBER"
-            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-            echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
-            echo "Using version from package.json: $VERSION"
-          fi
+          # Get version from the release event
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version from release tag: $VERSION"
           
       - name: Get commit history since last release
         id: commit_history
@@ -186,16 +193,16 @@ jobs:
           mkdir -p release-files
           find all-artifacts -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.dmg" -o -name "*.zip" \) | xargs -I{} cp {} release-files/
           
-      - name: Create Release
+      - name: Update Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ github.event.release.tag_name }}
+          name: ${{ github.event.release.name }}
           body: |
             ### Build Information
             - Build Number: ${{ github.run_number }}
             - Commit: ${{ github.sha }}
-            - Date: ${{ github.event.head_commit.timestamp }}
+            - Date: ${{ github.event.release.created_at }}
             
             ### Changes
             ${{ steps.commit_history.outputs.COMMIT_HISTORY }}
@@ -210,7 +217,7 @@ jobs:
             For support or to report issues, please visit our GitHub repository.
           files: release-files/*
           draft: false
-          prerelease: false
+          prerelease: ${{ github.event.release.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
