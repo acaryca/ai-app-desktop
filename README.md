@@ -1,118 +1,56 @@
-# Application Desktop AI
+# AI Win App
 
-Une application de bureau Electron qui encapsule l'interface web de chat AI dans une fenêtre native.
-
-## Structure du projet
-
-Le projet a été restructuré pour une meilleure organisation et maintenabilité :
-
-```
-app/
-├── main.js                 # Point d'entrée principal
-├── preload.js              # Script de préchargement pour la webview
-├── icons/                  # Icônes de l'application
-├── config/             # Configuration et constantes
-│   └── config.js       # Configuration globale de l'application
-├── ipc/                # Gestionnaires d'événements IPC
-│   └── ipc-handlers.js # Gestion des communications avec le renderer
-├── services/           # Services principaux
-│   ├── auto-updater.js # Gestion des mises à jour automatiques
-│   ├── tray-service.js # Gestion de l'icône dans la barre des tâches
-│   └── window-service.js # Création et gestion des fenêtres
-└── utils/              # Utilitaires
-    ├── file-utils.js   # Utilitaires pour les fichiers
-    ├── icon-utils.js   # Utilitaires pour les icônes
-    ├── menu-utils.js   # Utilitaires pour les menus
-    ├── platform-utils.js # Utilitaires spécifiques aux plateformes
-    └── window-effects.js # Effets visuels pour les fenêtres
-```
-
-## Fonctionnalités
-
-- 🌐 Encapsulation d'une application web dans une fenêtre native
-- 🔄 Mises à jour automatiques
-- 🖼️ Icône dans la barre des tâches/le dock
-- 🔝 Option "Toujours au premier plan"
-- 🚀 Lancement au démarrage du système
-- 🖱️ Glisser-déposer pour déplacer la fenêtre
-- 📱 Interface redimensionnable
-- 🌙 Animations d'apparition/disparition
-- 📸 Menu contextuel pour les images
-- 🔄 Réinitialisation de la fenêtre
-
-## Plateformes supportées
-
-- Windows
-- macOS
-- Linux (support partiel)
+Une application Electron qui ajoute une icône dans la barre des tâches Windows et ouvre une fenêtre affichant `localhost:3000/chat` lorsqu'on clique dessus.
 
 ## Prérequis
 
-- Node.js 18+ et npm
+- Node.js (v14 ou supérieur)
+- npm (v6 ou supérieur)
+- Un serveur web local fonctionnant sur `localhost:3000/chat`
 
 ## Installation
 
-### Pour les utilisateurs
+1. Clonez ce dépôt :
+   ```
+   git clone https://github.com/acaryca/ai-win-app.git
+   cd ai-win-app
+   ```
 
-1. Téléchargez la dernière version depuis la page [Releases](https://github.com/acaryca/ai-app-desktop/releases)
-2. Installez l'application en suivant les instructions spécifiques à votre système d'exploitation
-3. L'application se lancera automatiquement après l'installation
+2. Installez les dépendances :
+   ```
+   npm install
+   ```
 
-### Pour les développeurs
+## Utilisation
 
-Clonez le dépôt et installez les dépendances :
-
-```bash
-git clone https://github.com/acaryca/ai-app-desktop.git
-cd ai-app-desktop
-npm install
-```
-
-## Développement
+### Développement
 
 Pour lancer l'application en mode développement :
 
-```bash
+```
 npm start
 ```
 
-## Construction
+**Note importante :** Assurez-vous que votre serveur web local est en cours d'exécution sur `localhost:3000/chat` avant de démarrer l'application.
 
-Pour construire l'application pour toutes les plateformes :
+### Construction de l'application
 
-```bash
+Pour construire l'application pour Windows :
+
+```
 npm run build
 ```
 
-Pour construire pour une plateforme spécifique :
+Le fichier d'installation sera créé dans le dossier `dist`.
 
-```bash
-# Windows
-npm run package:win
+## Fonctionnalités
 
-# macOS
-npm run package:mac
-
-# Linux
-npm run package:linux
-```
-
-Les fichiers d'installation se trouveront dans le dossier `dist/`.
-
-## Génération d'icônes
-
-Pour générer les icônes à partir d'une image source :
-
-```bash
-npm run make-icon
-```
-
-Cette commande utilise l'image source dans `dev/icon/source.png` pour générer des icônes de différentes tailles et formats pour toutes les plateformes.
+- Icône dans la barre des tâches Windows (system tray)
+- Ouverture d'une fenêtre affichant `localhost:3000/chat` au clic sur l'icône
+- Menu contextuel avec options "Ouvrir" et "Quitter"
+- La fenêtre se positionne automatiquement dans le coin inférieur droit de l'écran
+- L'application continue de fonctionner en arrière-plan lorsque la fenêtre est fermée
 
 ## Licence
 
-ISC
-
-## Auteur
-
-ACARY (support@acary.ca) 
+ISC 

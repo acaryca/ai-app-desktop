@@ -1,117 +1,166 @@
-name: Build and Release
+name: Build Electron App
 
 on:
   push:
     branches: [ main ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: read
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    
     runs-on: ${{ matrix.os }}
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Désactive la publication automatique pendant le build
-      CSC_IDENTITY_AUTO_DISCOVERY: false
-      EP_GITHUB_PUBLISH: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      # Étape pour générer les icônes avant la construction
-      - name: Generate icons
-        run: npm run make-icon
-        
-      # Solution directe pour l'icône Windows
-      - name: Create Windows Icon with png-to-ico
-        if: matrix.os == 'windows-latest'
-        run: |
-          npm install -g png-to-ico
-          # Créer une icône Windows valide à partir du PNG
-          png-to-ico app/icons/icon-256.png > app/icons/icon.ico
-          # Vérifier que l'icône est valide
-          if [ -f "app/icons/icon.ico" ] && [ -s "app/icons/icon.ico" ]; then
-            echo "Icône Windows créée avec succès"
-            ls -la app/icons/icon.ico
-          else
-            echo "Échec de création de l'icône Windows"
-            exit 1
-          fi
-        shell: bash
-        
-      - name: Build for Windows
-        if: matrix.os == 'windows-latest'
-        run: npm run package:win -- --publish never
-        
-      - name: Build for macOS
-        if: matrix.os == 'macos-latest'
-        run: npm run package:mac -- --publish never
-        
-      - name: Build for Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: npm run package:linux -- --publish never
-      
-      - name: Upload Windows artifacts
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: dist/*.exe
-          
-      - name: Upload macOS artifacts
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: |
-            dist/*.dmg
-            dist/*.zip
-            
-      - name: Upload Linux artifacts
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-build
-          path: |
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
 
+    - name: Get version from package.json
+      id: version
+      shell: pwsh
+      run: |
+        $packageJson = Get-Content -Path package.json -Raw | ConvertFrom-Json
+        $version = $packageJson.version
+        $buildNumber = "${{ github.run_number }}"
+        $versionTag = "$version-$buildNumber"
+        if ("${{ runner.os }}" -eq "Windows") {
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "VERSION_TAG=$versionTag" >> $env:GITHUB_OUTPUT
+        } else {
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=$versionTag" >> $GITHUB_OUTPUT
+        }
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate icons
+      run: npm run convert-icon
+
+    - name: Generate ICNS for macOS
+      if: runner.os == 'macOS'
+      run: |
+        mkdir -p assets/icon.iconset
+        for size in 16 32 64 128 256 512; do
+          cp assets/icon-$size.png assets/icon.iconset/icon_${size}x${size}.png
+        done
+        for size in 32 64 128 256 512; do
+          cp assets/icon-$((size*2)).png assets/icon.iconset/icon_${size}x${size}@2x.png
+        done
+        iconutil -c icns assets/icon.iconset -o assets/icon.icns
+        rm -rf assets/icon.iconset
+
+    - name: Patch dmg-builder for macOS
+      if: runner.os == 'macOS'
+      run: |
+        DMG_BUILDER_PATH="node_modules/dmg-builder/out/dmg.js"
+        if [ -f "$DMG_BUILDER_PATH" ]; then
+          sed -i '' 's/const args = \["create"/const args = \["create", "-fs", "HFS+", "-fsargs", "-c c=64,a=16,e=16"/' "$DMG_BUILDER_PATH"
+          sed -i '' '/if (process.arch === "arm64") {/,/}/d' "$DMG_BUILDER_PATH"
+          echo "Patched dmg-builder to force HFS+ filesystem via code"
+        else
+          echo "dmg-builder file not found at $DMG_BUILDER_PATH"
+        fi
+
+    - name: Build application
+      run: npm run build
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Package for Windows
+      if: runner.os == 'Windows'
+      run: npm run package:win
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Package for Linux
+      if: runner.os == 'Linux'
+      run: npm run package:linux
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Package for macOS
+      if: runner.os == 'macOS'
+      run: npm run package:mac
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Windows artifacts
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai-win-app-windows-${{ steps.version.outputs.VERSION_TAG }}
+        path: dist/*.exe
+
+    - name: Upload Linux artifacts
+      if: runner.os == 'Linux'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai-win-app-linux-${{ steps.version.outputs.VERSION_TAG }}
+        path: |
+          dist/*.AppImage
+          dist/*.deb
+          dist/*.rpm
+
+    - name: Upload macOS artifacts
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai-win-app-macos-${{ steps.version.outputs.VERSION_TAG }}
+        path: |
+          dist/*.dmg
+          dist/*.zip
+        
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Get version from package.json
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUMBER="${{ github.run_number }}"
+          VERSION_TAG="$VERSION-$BUILD_NUMBER"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=$VERSION_TAG" >> $GITHUB_OUTPUT
+          
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist-artifacts
+          path: all-artifacts
+          
+      - name: Prepare release files
+        run: |
+          mkdir -p release-files
+          find all-artifacts -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.dmg" -o -name "*.zip" \) | xargs -I{} cp {} release-files/
           
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
-          files: |
-            dist-artifacts/windows-build/*
-            dist-artifacts/macos-build/*
-            dist-artifacts/linux-build/*
+          tag_name: v${{ steps.version.outputs.VERSION_TAG }}
+          name: ACARY AI App - Release ${{ steps.version.outputs.VERSION_TAG }}
+          files: release-files/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

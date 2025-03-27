@@ -32,23 +32,23 @@ const ANIMATIONS = {
 // Configuration des icônes
 function getIconPath() {
   if (process.platform === 'win32') {
-    // Sur Windows, utiliser un fichier PNG au lieu de ICO qui semble poser problème
-    return path.join(__dirname, 'icons', 'tray-icon-32.png');
+    // Sur Windows, utiliser l'icône ICO pour une meilleure qualité
+    return path.join(__dirname, 'assets', 'icon.ico');
   } else if (process.platform === 'darwin') {
     // Sur macOS, utiliser une icône de template pour le mode sombre/clair
-    return path.join(__dirname, 'icons', 'tray-icon-Template.png');
+    return path.join(__dirname, 'assets', 'icon-template.png');
   } else {
     // Sur Linux et autres plateformes, choisir selon la résolution
     const { scaleFactor } = screen.getPrimaryDisplay();
     
     if (scaleFactor <= 1) {
-      return path.join(__dirname, 'icons', 'tray-icon-16.png');
+      return path.join(__dirname, 'assets', 'icon-16.png');
     } else if (scaleFactor <= 1.5) {
-      return path.join(__dirname, 'icons', 'tray-icon-24.png');
+      return path.join(__dirname, 'assets', 'icon-24.png');
     } else if (scaleFactor <= 2) {
-      return path.join(__dirname, 'icons', 'tray-icon-32.png');
+      return path.join(__dirname, 'assets', 'icon-32.png');
     } else {
-      return path.join(__dirname, 'icons', 'icon-48.png'); // Garde icon-48.png car tray-icon-48.png n'existe pas
+      return path.join(__dirname, 'assets', 'icon-48.png');
     }
   }
 }
@@ -136,48 +136,40 @@ const SAVE_IMAGE_OPTIONS = (app, filename) => ({
   ]
 });
 
-// Template du menu de la barre des tâches pour Windows et Linux
-function getTrayMenuTemplate(isAlwaysOnTop, animationsEnabled, openAtStartup) {
-  return [
-    {
-      label: 'Ouvrir AI',
-      click: 'open-window'
-    },
-    { type: 'separator' },
-    {
-      label: 'Toujours au premier plan',
-      type: 'checkbox',
-      checked: isAlwaysOnTop,
-      click: 'toggle-always-on-top'
-    },
-    {
-      label: 'Activer les animations',
-      type: 'checkbox',
-      checked: animationsEnabled,
-      click: 'toggle-animations'
-    },
-    {
-      label: 'Lancer au démarrage',
-      type: 'checkbox',
-      checked: openAtStartup,
-      click: 'toggle-startup'
-    },
-    {
-      label: 'Vérifier les mises à jour',
-      click: 'check-for-updates'
-    },
-    { type: 'separator' },
-    {
-      label: 'Réinitialiser la fenêtre',
-      click: 'reset-window'
-    },
-    { type: 'separator' },
-    {
-      label: 'Quitter',
-      click: 'quit-app'
-    }
-  ];
-}
+// Template pour le menu de la barre des tâches
+const getTrayMenuTemplate = (isAlwaysOnTop, animationsEnabled, openAtStartup) => [
+  { 
+    label: 'Ouvrir', 
+    click: 'open-window'
+  },
+  { 
+    label: 'Toujours au premier plan', 
+    type: 'checkbox',
+    checked: isAlwaysOnTop,
+    click: 'toggle-always-on-top'
+  },
+  { 
+    label: 'Animations', 
+    type: 'checkbox',
+    checked: animationsEnabled,
+    click: 'toggle-animations'
+  },
+  { 
+    label: 'Lancer au démarrage', 
+    type: 'checkbox',
+    checked: openAtStartup,
+    click: 'toggle-startup'
+  },
+  { 
+    label: 'Réinitialiser la fenêtre', 
+    click: 'reset-window'
+  },
+  { type: 'separator' },
+  { 
+    label: 'Quitter', 
+    click: 'quit-app'
+  }
+];
 
 // Options supplémentaires pour le menu sur macOS
 const MAC_TRAY_EXTRAS = [
