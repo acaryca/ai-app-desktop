@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, screen, MenuItem, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, Tray, Menu, screen, MenuItem, ipcMain, shell, dialog, globalShortcut } = require('electron');
 const path = require('path');
 const options = require('./options'); // Importer le module options
 const { autoUpdater } = require('electron-updater');
@@ -46,6 +46,9 @@ async function init() {
     
     // Configurer la gestion du déplacement de la fenêtre
     setupWindowDrag();
+    
+    // Configurer les raccourcis clavier
+    setupShortcuts();
     
     // Configurer les mises à jour automatiques
     setupAutoUpdater();
@@ -370,6 +373,22 @@ function configurePlatformSpecifics() {
       }
     });
   }
+}
+
+// Fonction pour configurer les raccourcis clavier
+function setupShortcuts() {
+  // Raccourci CTRL+R pour recharger la page
+  globalShortcut.register('CommandOrControl+R', () => {
+    if (mainWindow) {
+      mainWindow.webContents.reload();
+      console.log('Page rechargée avec CTRL+R');
+    }
+  });
+  
+  // S'assurer que les raccourcis sont libérés quand l'application se ferme
+  app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
+  });
 }
 
 // Fonction pour télécharger une image
