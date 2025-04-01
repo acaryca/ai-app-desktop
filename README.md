@@ -1,6 +1,6 @@
 # AI App Desktop
 
-A sleek app that adds an icon to your Windows system tray for instant access to seamless AI chat conversations. Engage effortlessly with cutting-edge AI right at your fingertips!
+A sleek app that adds an icon to your system tray for instant access to seamless AI chat conversations. Engage effortlessly with cutting-edge AI right at your fingertips!
 
 ![AI App Desktop Banner](/.github/assets/banner.png)
 

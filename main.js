@@ -377,11 +377,18 @@ function configurePlatformSpecifics() {
 
 // Fonction pour configurer les raccourcis clavier
 function setupShortcuts() {
+  let lastReloadTime = 0;
+  const RELOAD_COOLDOWN = 500;
+
   // Raccourci CTRL+R pour recharger la page
   globalShortcut.register('CommandOrControl+R', () => {
     if (mainWindow) {
-      mainWindow.webContents.reload();
-      console.log('Page rechargée avec CTRL+R');
+      const currentTime = Date.now();
+      if (currentTime - lastReloadTime >= RELOAD_COOLDOWN) {
+        mainWindow.webContents.reload();
+        lastReloadTime = currentTime;
+        console.log('Page rechargée avec CTRL+R');
+      }
     }
   });
   
