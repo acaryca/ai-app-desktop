@@ -493,6 +493,17 @@ function setupAutoUpdater() {
   autoUpdater.logger = require('electron-log');
   autoUpdater.logger.transports.file.level = 'info';
   
+  // Désactiver le téléchargement automatique par défaut
+  autoUpdater.autoDownload = false;
+  
+  // Corriger l'URL de téléchargement si nécessaire
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'acaryca',
+    repo: 'ai-app-tray',
+    releaseType: 'release'
+  });
+  
   // Événements de mise à jour
   autoUpdater.on('checking-for-update', () => {
     console.log('Vérification des mises à jour...');
@@ -550,7 +561,7 @@ function setupAutoUpdater() {
 // Vérifier les mises à jour
 function checkForUpdates(showNoUpdateMessage = true) {
   // Sauvegarder la valeur précédente
-  const previousShowNoUpdateMessage = autoUpdater.autoDownload;
+  const previousAutoDownload = autoUpdater.autoDownload;
   
   // Si showNoUpdateMessage est false, éviter de montrer le message si aucune mise à jour n'est disponible
   if (!showNoUpdateMessage) {
@@ -560,11 +571,11 @@ function checkForUpdates(showNoUpdateMessage = true) {
     });
   }
   
-  // Définir autoDownload à true pour télécharger automatiquement les mises à jour
-  autoUpdater.autoDownload = true;
+  // Maintenir autoDownload à false pour ne pas télécharger automatiquement
+  autoUpdater.autoDownload = false;
   
   try {
-    autoUpdater.checkForUpdatesAndNotify();
+    autoUpdater.checkForUpdates();
   } catch (error) {
     console.error('Erreur lors de la vérification des mises à jour:', error);
     if (showNoUpdateMessage) {
@@ -594,6 +605,9 @@ function checkForUpdates(showNoUpdateMessage = true) {
       });
     }, 1000);
   }
+  
+  // Restaurer la valeur précédente de autoDownload
+  autoUpdater.autoDownload = previousAutoDownload;
 }
 
 // Afficher une notification de mise à jour disponible
@@ -608,7 +622,8 @@ function showUpdateNotification(info) {
   
   dialog.showMessageBox(dialogOpts).then((returnValue) => {
     if (returnValue.response === 0) {
-      // L'utilisateur a choisi de télécharger, nous laissons l'autoUpdater continuer
+      // L'utilisateur a choisi de télécharger, démarrer le téléchargement
+      autoUpdater.downloadUpdate();
     }
   });
 }
