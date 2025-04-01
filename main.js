@@ -372,24 +372,101 @@ function createTray(store) {
 // Function to refresh the UI after language change
 function recreateMenu(store) {
   if (tray) {
-    const contextMenu = Menu.buildFromTemplate(
-      options.getTrayMenuTemplate(isAlwaysOnTop, animationsEnabled, openAtStartup, i18n)
-        .map(item => {
-          if (item.click === 'open-window') {
-            return {
-              ...item,
-              click: () => {
-                if (mainWindow === null) {
-                  createWindow(store);
-                } else {
-                  openWindowWithEffect(mainWindow);
-                }
-              }
-            };
+    // Define action handlers (same as in createTray)
+    const actionHandlers = {
+      'open-window': () => {
+        if (mainWindow === null) {
+          createWindow(store);
+        } else {
+          openWindowWithEffect(mainWindow);
+        }
+      },
+      'toggle-always-on-top': () => {
+        isAlwaysOnTop = !isAlwaysOnTop;
+        if (mainWindow) {
+          mainWindow.setAlwaysOnTop(isAlwaysOnTop);
+        }
+        store.set('isAlwaysOnTop', isAlwaysOnTop);
+      },
+      'toggle-animations': () => {
+        animationsEnabled = !animationsEnabled;
+        options.ANIMATIONS.enabled = animationsEnabled;
+        store.set('animationsEnabled', animationsEnabled);
+      },
+      'toggle-startup': () => {
+        openAtStartup = !openAtStartup;
+        setAutoLaunch(openAtStartup);
+        store.set('openAtStartup', openAtStartup);
+      },
+      'reset-window': () => {
+        if (mainWindow) {
+          // Reset dimensions
+          mainWindow.setSize(options.DEFAULT_WINDOW_SIZE.width, options.DEFAULT_WINDOW_SIZE.height);
+          
+          // Calculate position at bottom right
+          const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+          const newPosition = {
+            x: width - options.DEFAULT_WINDOW_SIZE.width - 10,
+            y: height - options.DEFAULT_WINDOW_SIZE.height - 10
+          };
+          
+          // Apply new position
+          mainWindow.setPosition(newPosition.x, newPosition.y);
+          
+          // Save reset settings
+          store.set('windowSize', options.DEFAULT_WINDOW_SIZE);
+          store.set('windowPosition', newPosition);
+          
+          console.log(i18n.t('logs.windowReset'), options.DEFAULT_WINDOW_SIZE, i18n.t('logs.position'), newPosition);
+        }
+      },
+      'check-updates': () => {
+        // Check for updates manually (with message if no update)
+        checkForUpdates(true);
+      },
+      'quit-app': () => {
+        isQuitting = true;
+        app.quit();
+      }
+    };
+
+    // Handle language switch
+    i18n.getAvailableLanguages().forEach(lang => {
+      actionHandlers[`set-language-${lang}`] = () => {
+        if (i18n.setLanguage(lang)) {
+          // Refresh UI after language change
+          recreateMenu(store);
+        }
+      };
+    });
+
+    // Get menu template and map actions to functions
+    let menuTemplate = options.getTrayMenuTemplate(isAlwaysOnTop, animationsEnabled, openAtStartup, i18n);
+    
+    // Replace actions with actual functions
+    menuTemplate = menuTemplate.map(item => {
+      if (item.click && typeof item.click === 'string' && actionHandlers[item.click]) {
+        return { ...item, click: actionHandlers[item.click] };
+      } else if (item.submenu) {
+        // Process submenu items
+        item.submenu = item.submenu.map(subItem => {
+          if (subItem.click && typeof subItem.click === 'string' && actionHandlers[subItem.click]) {
+            return { ...subItem, click: actionHandlers[subItem.click] };
           }
-          return item;
-        })
-    );
+          return subItem;
+        });
+      }
+      return item;
+    });
+    
+    // Add macOS-specific options
+    if (process.platform === 'darwin') {
+      // Insert additional elements after "Reset Window" option
+      const macExtras = options.getMacTrayExtras(i18n);
+      menuTemplate.splice(4, 0, ...macExtras);
+    }
+    
+    const contextMenu = Menu.buildFromTemplate(menuTemplate);
     tray.setToolTip(i18n.t('tray.tooltip'));
     tray.setContextMenu(contextMenu);
   }

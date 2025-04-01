@@ -148,6 +148,7 @@ const getTrayMenuTemplate = (isAlwaysOnTop, animationsEnabled, openAtStartup, i1
       label: i18n.t('tray.checkUpdates'), 
       click: 'check-updates'
     },
+    { type: 'separator' },
     { 
       label: i18n.t('tray.alwaysOnTop'), 
       type: 'checkbox',
