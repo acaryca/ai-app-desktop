@@ -255,11 +255,3 @@ jobs:
           prerelease: ${{ github.event.release.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Delete workflow artifacts
-        uses: geekyeggo/delete-artifact@v2
-        if: always()
-        with:
-          name: ai-win-app-windows,ai-win-app-linux,ai-win-app-macos
-          failOnError: false
-          useGlob: true 
