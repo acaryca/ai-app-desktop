@@ -120,12 +120,19 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: List dist directory content
+      shell: bash
+      run: ls -la dist/
+
     - name: Upload Windows artifacts
       if: runner.os == 'Windows'
       uses: actions/upload-artifact@v4
       with:
         name: ai-win-app-windows
-        path: dist/*.exe
+        path: |
+          dist/*.exe
+          dist/*.exe.blockmap
+          dist/latest.yml
         retention-days: 1
 
     - name: Upload Linux artifacts
@@ -137,6 +144,7 @@ jobs:
           dist/*.AppImage
           dist/*.deb
           dist/*.rpm
+          dist/*.yml
         retention-days: 1
 
     - name: Upload macOS artifacts
@@ -147,6 +155,8 @@ jobs:
         path: |
           dist/*.dmg
           dist/*.zip
+          dist/*.blockmap
+          dist/*.yml
         retention-days: 1
         
   release:
@@ -208,7 +218,15 @@ jobs:
       - name: Prepare release files
         run: |
           mkdir -p release-files
+          # Copier les fichiers d'installation
           find all-artifacts -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.dmg" -o -name "*.zip" \) | xargs -I{} cp {} release-files/
+          
+          # Copier les fichiers de mise à jour
+          find all-artifacts -type f \( -name "*.yml" -o -name "*.blockmap" \) | xargs -I{} cp {} release-files/
+          
+          # Lister tous les fichiers préparés pour la release
+          echo "Files prepared for release:"
+          ls -la release-files/
           
       - name: Update Release
         uses: softprops/action-gh-release@v1

@@ -10,11 +10,11 @@
   },
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
-    "package": "electron-builder --win --x64",
-    "package:win": "electron-builder --win --x64",
-    "package:linux": "electron-builder --linux --x64",
-    "package:mac": "electron-builder --mac --x64",
+    "build": "electron-builder --publish never",
+    "package": "electron-builder --win --x64 --publish never",
+    "package:win": "electron-builder --win --x64 --publish never",
+    "package:linux": "electron-builder --linux --x64 --publish never",
+    "package:mac": "electron-builder --mac --x64 --publish never",
     "convert-icon": "node convert-icon.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
