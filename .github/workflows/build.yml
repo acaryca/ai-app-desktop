@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           
@@ -82,15 +82,25 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 18
         cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+
+    - name: Configure npm
+      run: |
+        npm config set fund false
+        npm config set audit false
+        npm config set progress false
+        npm config set fetch-retries 5
+        npm config set fetch-retry-mintimeout 20000
+        npm config set fetch-retry-maxtimeout 120000
 
     - name: Get version from package.json
       id: version
@@ -111,7 +121,17 @@ jobs:
           echo "Using version from package.json: $VERSION"
         fi
 
+    - name: Cache node modules
+      uses: actions/cache@v3
+      id: cache-node-modules
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
     - name: Install dependencies
+      if: steps.cache-node-modules.outputs.cache-hit != 'true'
       run: npm ci
 
     - name: Generate icons
@@ -213,7 +233,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
         
