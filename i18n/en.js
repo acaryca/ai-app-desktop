@@ -62,6 +62,7 @@ module.exports = {
     pageReloaded: 'Page reloaded with CTRL+R',
     linuxAutostart: 'Automatic startup configuration on Linux not implemented',
     updateDownloaded: 'Update downloaded:',
-    downloadProgress: 'Speed: {speed} - Downloaded {percent}%'
+    downloadProgress: 'Speed: {speed} - Downloaded {percent}%',
+    updateConfigSaved: 'Update configuration saved for correct file naming'
   }
 };

@@ -646,6 +646,35 @@ function setupAutoUpdater() {
     releaseType: 'release'
   });
   
+  // Force additional configuration for update filenames
+  autoUpdater.on('before-checking-for-update', () => {
+    try {
+      const configPath = path.join(app.getPath('userData'), 'electron-builder-config.json');
+      const configData = {
+        fileNames: {
+          win: {
+            installerExe: 'AI.Chat.Setup.${version}.exe',
+            installerMsi: 'AI.Chat.Setup.${version}.msi'
+          },
+          mac: {
+            zip: 'AI.Chat-${version}-mac.zip',
+            dmg: 'AI.Chat-${version}.dmg'
+          },
+          linux: {
+            appImage: 'AI.Chat-${version}.AppImage',
+            deb: 'ai-app-tray_${version}_amd64.deb',
+            rpm: 'ai-app-tray-${version}.x86_64.rpm'
+          }
+        }
+      };
+      
+      require('fs').writeFileSync(configPath, JSON.stringify(configData, null, 2));
+      console.log(i18n.t('logs.updateConfigSaved'));
+    } catch (error) {
+      console.error('Error setting update file config:', error);
+    }
+  });
+  
   // Update events
   autoUpdater.on('checking-for-update', () => {
     console.log(i18n.t('logs.checking'));

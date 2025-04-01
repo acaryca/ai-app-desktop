@@ -1,0 +1,30 @@
+appId: ca.acary.app.ai.chat
+productName: AI Chat
+artifactName: ${productName}.Setup.${version}.${ext}
+win:
+  target: nsis
+  icon: assets/icon.ico
+  artifactName: AI.Chat.Setup.${version}.${ext}
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  icon: assets/icon.png
+  category: Utility
+  artifactName: AI.Chat-${version}.${ext}
+mac:
+  target:
+    - dmg
+    - zip
+  icon: assets/icon.icns
+  category: public.app-category.utilities
+  darkModeSupport: true
+  artifactName: AI.Chat-${version}-${os}.${ext}
+dmg:
+  format: UDBZ
+  artifactName: AI.Chat-${version}.${ext}
+publish:
+  - provider: github
+    owner: acaryca
+    repo: ai-app-tray

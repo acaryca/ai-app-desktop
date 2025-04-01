@@ -37,42 +37,6 @@
     "electron-store": "^10.0.1",
     "electron-updater": "^6.6.2"
   },
-  "build": {
-    "appId": "ca.acary.app.ai.chat",
-    "productName": "AI Chat",
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb",
-        "rpm"
-      ],
-      "icon": "assets/icon.png",
-      "category": "Utility"
-    },
-    "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "icon": "assets/icon.icns",
-      "category": "public.app-category.utilities",
-      "darkModeSupport": true
-    },
-    "dmg": {
-      "format": "UDBZ"
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "acaryca",
-        "repo": "ai-app-tray"
-      }
-    ]
-  },
   "devDependencies": {
     "electron": "^29.1.0",
     "electron-builder": "^24.13.3",

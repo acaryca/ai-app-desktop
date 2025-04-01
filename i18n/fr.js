@@ -62,6 +62,7 @@ module.exports = {
     pageReloaded: 'Page rechargée avec CTRL+R',
     linuxAutostart: 'Configuration du démarrage automatique sur Linux non implémentée',
     updateDownloaded: 'Mise à jour téléchargée:',
-    downloadProgress: 'Vitesse: {speed} - Téléchargé {percent}%'
+    downloadProgress: 'Vitesse: {speed} - Téléchargé {percent}%',
+    updateConfigSaved: 'Configuration de mise à jour enregistrée pour le nommage correct des fichiers'
   }
 }; 

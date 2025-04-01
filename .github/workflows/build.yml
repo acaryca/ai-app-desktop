@@ -146,24 +146,28 @@ jobs:
       run: npm run build
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        USE_HARD_LINKS: false
 
     - name: Package for Windows
       if: runner.os == 'Windows'
       run: npm run package:win
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        USE_HARD_LINKS: false
 
     - name: Package for Linux
       if: runner.os == 'Linux'
       run: npm run package:linux
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        USE_HARD_LINKS: false
 
     - name: Package for macOS
       if: runner.os == 'macOS'
       run: npm run package:mac
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        USE_HARD_LINKS: false
 
     - name: List dist directory content
       shell: bash
