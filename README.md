@@ -1,8 +1,8 @@
-# AI App Desktop
+# AI App Tray
 
 A sleek app that adds an icon to your system tray for instant access to seamless AI chat conversations. Engage effortlessly with cutting-edge AI right at your fingertips!
 
-![AI App Desktop Banner](/.github/assets/banner.png)
+![AI App Tray Banner](/.github/assets/banner.png)
 
 ## Installation
 
@@ -11,7 +11,7 @@ A sleek app that adds an icon to your system tray for instant access to seamless
 - Node.js 16.x or later (for development)
 
 ### Download and Install
-1. Go to the [Releases](https://github.com/acaryca/ai-app-desktop/releases) page
+1. Go to the [Releases](https://github.com/acaryca/ai-app-tray/releases) page
 2. Download the appropriate installer for your platform:
    - Windows: `.exe` installer
    - Linux: `.AppImage` or `.deb` package
@@ -23,8 +23,8 @@ A sleek app that adds an icon to your system tray for instant access to seamless
 If you want to build the application from source:
 1. Clone the repository:
    ```bash
-   git clone https://github.com/acaryca/ai-app-desktop.git
-   cd ai-app-desktop
+   git clone https://github.com/acaryca/ai-app-tray.git
+   cd ai-app-tray
    ```
 2. Install dependencies:
    ```bash
