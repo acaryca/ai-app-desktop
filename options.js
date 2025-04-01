@@ -1,17 +1,18 @@
 const path = require('path');
 const { screen } = require('electron');
 
-// Dimensions par défaut de la fenêtre
+// Default window dimensions
 const DEFAULT_WINDOW_SIZE = {
   width: 400,
   height: 700
 };
 
-// Configuration de electron-store
+// Electron-store configuration
 const STORE_DEFAULTS = {
   isAlwaysOnTop: true,
   animationsEnabled: false,
   openAtStartup: true,
+  language: null, // Will be determined by system locale
   windowPosition: {
     x: 0,
     y: 0
@@ -22,23 +23,23 @@ const STORE_DEFAULTS = {
   }
 };
 
-// Animations de la fenêtre
+// Window animations
 const ANIMATIONS = {
-  enabled: false, // Sera mis à jour après le chargement du store
+  enabled: false, // Will be updated after loading the store
   fadeStep: 0.15,
   fadeInterval: 5
 };
 
-// Configuration des icônes
+// Icons configuration
 function getIconPath() {
   if (process.platform === 'win32') {
-    // Sur Windows, utiliser l'icône ICO pour une meilleure qualité
+    // On Windows, use ICO icon for better quality
     return path.join(__dirname, 'assets', 'icon.ico');
   } else if (process.platform === 'darwin') {
-    // Sur macOS, utiliser une icône de template pour le mode sombre/clair
+    // On macOS, use a template icon for dark/light mode
     return path.join(__dirname, 'assets', 'icon-template.png');
   } else {
-    // Sur Linux et autres plateformes, choisir selon la résolution
+    // On Linux and other platforms, choose according to resolution
     const { scaleFactor } = screen.getPrimaryDisplay();
     
     if (scaleFactor <= 1) {
@@ -53,7 +54,7 @@ function getIconPath() {
   }
 }
 
-// Configuration de la fenêtre principale
+// Main window configuration
 const WINDOW_CONFIG = {
   show: false,
   frame: false,
@@ -66,38 +67,38 @@ const WINDOW_CONFIG = {
     webSecurity: false,
     allowRunningInsecureContent: true
   },
-  // Permettre de faire glisser la fenêtre
+  // Allow window dragging
   draggable: true,
-  // Empêcher le comportement par défaut du navigateur pour le déplacement
+  // Prevent default browser behavior for drag-and-drop
   titleBarStyle: 'hidden'
 };
 
-// URL de l'application
+// Application URL
 const APP_URL = 'https://ai.acary.app/chat';
 
-// Menu contextuel standard pour clic droit dans la fenêtre
-const CONTEXT_MENU_TEMPLATE = [
-  { label: 'Copier', role: 'copy' },
-  { label: 'Coller', role: 'paste' },
+// Standard context menu for right-click in window
+const getContextMenuTemplate = (i18n) => [
+  { label: i18n.t('context.copy'), role: 'copy' },
+  { label: i18n.t('context.paste'), role: 'paste' },
   { type: 'separator' },
-  { label: 'Sélectionner tout', role: 'selectAll' }
+  { label: i18n.t('context.selectAll'), role: 'selectAll' }
 ];
 
-// Menu contextuel pour les images
-const IMAGE_MENU_TEMPLATE = (data) => [
+// Context menu for images
+const getImageMenuTemplate = (data, i18n) => [
   { 
-    label: 'Télécharger l\'image', 
-    click: 'download-image' // Action à gérer dans main.js
+    label: i18n.t('context.downloadImage'), 
+    click: 'download-image' // Action to handle in main.js
   },
   { type: 'separator' },
   { 
-    label: 'Copier l\'URL de l\'image', 
+    label: i18n.t('context.copyImageUrl'), 
     click: () => require('electron').clipboard.writeText(data.srcUrl)
   }
 ];
 
-// Template de menu pour macOS
-const MAC_MENU_TEMPLATE = (app) => [
+// Menu template for macOS
+const getMacMenuTemplate = (app, i18n) => [
   {
     label: app.name,
     submenu: [
@@ -113,7 +114,7 @@ const MAC_MENU_TEMPLATE = (app) => [
     ]
   },
   {
-    label: 'Edition',
+    label: i18n.t('menu.edit'),
     submenu: [
       { role: 'undo' },
       { role: 'redo' },
@@ -126,65 +127,87 @@ const MAC_MENU_TEMPLATE = (app) => [
   }
 ];
 
-// Options de la boîte de dialogue pour sauvegarder des images
-const SAVE_IMAGE_OPTIONS = (app, filename) => ({
-  title: 'Enregistrer l\'image',
+// Dialog options for saving images
+const getSaveImageOptions = (app, filename, i18n) => ({
+  title: i18n.t('dialog.save.title'),
   defaultPath: path.join(app.getPath('downloads'), filename),
   filters: [
-    { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] },
-    { name: 'Tous les fichiers', extensions: ['*'] }
+    { name: i18n.t('dialog.save.images'), extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'] },
+    { name: i18n.t('dialog.save.allFiles'), extensions: ['*'] }
   ]
 });
 
-// Template pour le menu de la barre des tâches
-const getTrayMenuTemplate = (isAlwaysOnTop, animationsEnabled, openAtStartup) => [
-  { 
-    label: 'Ouvrir', 
-    click: 'open-window'
-  },
-  { 
-    label: 'Vérifier les mises à jour', 
-    click: 'check-updates'
-  },
-  { 
-    label: 'Toujours au premier plan', 
-    type: 'checkbox',
-    checked: isAlwaysOnTop,
-    click: 'toggle-always-on-top'
-  },
-  { 
-    label: 'Animations', 
-    type: 'checkbox',
-    checked: animationsEnabled,
-    click: 'toggle-animations'
-  },
-  { 
-    label: 'Lancer au démarrage', 
-    type: 'checkbox',
-    checked: openAtStartup,
-    click: 'toggle-startup'
-  },
-  { 
-    label: 'Réinitialiser la fenêtre', 
-    click: 'reset-window'
-  },
-  { type: 'separator' },
-  { 
-    label: 'Quitter', 
-    click: 'quit-app'
+// Template for the system tray menu
+const getTrayMenuTemplate = (isAlwaysOnTop, animationsEnabled, openAtStartup, i18n) => {
+  const template = [
+    { 
+      label: i18n.t('tray.open'), 
+      click: 'open-window'
+    },
+    { 
+      label: i18n.t('tray.checkUpdates'), 
+      click: 'check-updates'
+    },
+    { 
+      label: i18n.t('tray.alwaysOnTop'), 
+      type: 'checkbox',
+      checked: isAlwaysOnTop,
+      click: 'toggle-always-on-top'
+    },
+    { 
+      label: i18n.t('tray.animations'), 
+      type: 'checkbox',
+      checked: animationsEnabled,
+      click: 'toggle-animations'
+    },
+    { 
+      label: i18n.t('tray.launchAtStartup'), 
+      type: 'checkbox',
+      checked: openAtStartup,
+      click: 'toggle-startup'
+    },
+    { 
+      label: i18n.t('tray.resetWindow'), 
+      click: 'reset-window'
+    }
+  ];
+  
+  // Add language selector submenu
+  const languages = i18n.getAvailableLanguages();
+  if (languages.length > 1) {
+    const currentLang = i18n.getLanguage();
+    const langSubmenu = languages.map(lang => ({
+      label: lang.toUpperCase(),
+      type: 'radio',
+      checked: lang === currentLang,
+      click: `set-language-${lang}`
+    }));
+    
+    template.push({
+      label: 'Language', // This will be shown regardless of language
+      submenu: langSubmenu
+    });
   }
-];
+  
+  template.push({ type: 'separator' });
+  template.push({ 
+    label: i18n.t('tray.quit'), 
+    click: 'quit-app'
+  });
+  
+  return template;
+};
 
-// Options supplémentaires pour le menu sur macOS
-const MAC_TRAY_EXTRAS = [
+// Additional options for menu on macOS
+const getMacTrayExtras = (i18n) => [
   { type: 'separator' },
   { 
-    label: 'Services', 
+    label: i18n.t('tray.services'), 
     role: 'services' 
   }
 ];
 
-// Exporter les options
+// Export options
 module.exports = {
   DEFAULT_WINDOW_SIZE,
   STORE_DEFAULTS,
@@ -192,10 +215,10 @@ module.exports = {
   getIconPath,
   WINDOW_CONFIG,
   APP_URL,
-  CONTEXT_MENU_TEMPLATE,
-  IMAGE_MENU_TEMPLATE,
-  MAC_MENU_TEMPLATE,
-  SAVE_IMAGE_OPTIONS,
+  getContextMenuTemplate,
+  getImageMenuTemplate,
+  getMacMenuTemplate,
+  getSaveImageOptions,
   getTrayMenuTemplate,
-  MAC_TRAY_EXTRAS
+  getMacTrayExtras
 }; 

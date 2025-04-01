@@ -3,112 +3,112 @@ const path = require('path');
 const sharp = require('sharp');
 const pngToIco = require('png-to-ico');
 
-// Chemin vers le fichier SVG
+// Path to SVG file
 const svgPath = path.join(__dirname, 'assets', 'icon.svg');
-// Dossier de sortie
+// Output directory
 const outputDir = path.join(__dirname, 'assets');
 
-// Tailles d'icônes à générer (en pixels)
+// Icon sizes to generate (in pixels)
 const sizes = [16, 24, 32, 48, 64, 128, 256, 512, 1024];
 
-// Fonction pour créer le dossier s'il n'existe pas
+// Function to create directory if it doesn't exist
 function ensureDirectoryExists(directory) {
   if (!fs.existsSync(directory)) {
     fs.mkdirSync(directory, { recursive: true });
   }
 }
 
-// Fonction pour convertir SVG en PNG avec différentes tailles
+// Function to convert SVG to PNG with different sizes
 async function convertSvgToPng() {
   try {
-    // Créer le dossier de sortie s'il n'existe pas
+    // Create output directory if it doesn't exist
     ensureDirectoryExists(outputDir);
     
     const pngPaths = [];
     
-    // Générer les PNG pour chaque taille
+    // Generate PNGs for each size
     for (const size of sizes) {
       const pngPath = path.join(outputDir, `icon-${size}.png`);
       
-      // Convertir SVG en PNG avec sharp
+      // Convert SVG to PNG with sharp
       await sharp(svgPath)
         .resize(size, size)
         .toFile(pngPath);
       
-      console.log(`Conversion SVG en PNG (${size}x${size}) réussie!`);
+      console.log(`SVG to PNG conversion (${size}x${size}) successful!`);
       
-      // Ajouter le chemin du fichier à la liste pour la création du fichier ICO (seulement les tailles jusqu'à 256)
+      // Add file path to the list for ICO file creation (only sizes up to 256)
       if (size <= 256) {
         pngPaths.push(pngPath);
       }
     }
     
-    // Créer le fichier ICO à partir des PNG pour Windows
+    // Create ICO file from PNGs for Windows
     try {
       const icoBuffer = await pngToIco(pngPaths);
       const icoPath = path.join(outputDir, 'icon.ico');
       
-      // Écrire le fichier ICO
+      // Write the ICO file
       fs.writeFileSync(icoPath, icoBuffer);
-      console.log('Création du fichier ICO réussie!');
+      console.log('ICO file creation successful!');
     } catch (err) {
-      console.error('Erreur lors de la création du fichier ICO:', err);
+      console.error('Error creating ICO file:', err);
     }
     
-    // Copier le fichier de taille 32x32 comme icône principale pour le system tray
+    // Copy the 32x32 size file as main icon for system tray
     fs.copyFileSync(
       path.join(outputDir, 'icon-32.png'),
       path.join(outputDir, 'icon.png')
     );
-    console.log('Icône principale pour le system tray créée!');
+    console.log('Main icon for system tray created!');
     
-    // Copier le fichier de taille 256x256 comme icône principale pour Linux
+    // Copy the 256x256 size file as main icon for Linux
     fs.copyFileSync(
       path.join(outputDir, 'icon-256.png'),
       path.join(outputDir, 'icon.png')
     );
-    console.log('Icône principale pour Linux créée (256x256)!');
+    console.log('Main icon for Linux created (256x256)!');
     
-    // Créer une icône template pour macOS (noir et transparent)
+    // Create a template icon for macOS (black and transparent)
     try {
-      // Lire le SVG original et le modifier pour le rendre monochrome
+      // Read the original SVG and modify it to be monochrome
       let svgContent = fs.readFileSync(svgPath, 'utf8');
       
-      // Remplacer les couleurs par du noir
+      // Replace colors with black
       svgContent = svgContent.replace(/<path[^>]*fill="[^"]*"[^>]*>/g, (match) => {
         return match.replace(/fill="[^"]*"/g, 'fill="black"');
       });
       
-      // Écrire le SVG template
+      // Write the SVG template
       const templateSvgPath = path.join(outputDir, 'icon-template.svg');
       fs.writeFileSync(templateSvgPath, svgContent);
       
-      // Convertir le SVG template en PNG avec sharp
+      // Convert template SVG to PNG with sharp
       await sharp(templateSvgPath)
         .resize(32, 32)
         .toFile(path.join(outputDir, 'icon-template.png'));
       
-      console.log('Icône template pour macOS créée!');
+      console.log('Template icon for macOS created!');
     } catch (err) {
-      console.error('Erreur lors de la création de l\'icône template:', err);
+      console.error('Error creating template icon:', err);
     }
     
-    // Créer un fichier PNG de 1024x1024 pour macOS (sera converti en ICNS dans le workflow GitHub Actions)
+    // Create a 1024x1024 PNG file for macOS (will be converted to ICNS in GitHub Actions workflow)
     try {
-      // Copier le PNG de 1024x1024 comme base pour l'icône macOS
+      // Copy the 1024x1024 PNG as base for macOS icon
       fs.copyFileSync(
         path.join(outputDir, 'icon-1024.png'),
         path.join(outputDir, 'icon-mac.png')
       );
-      console.log('Icône de base pour macOS créée!');
+      console.log('Base icon for macOS created!');
     } catch (err) {
-      console.error('Erreur lors de la création de l\'icône macOS:', err);
+      console.error('Error creating macOS icon:', err);
     }
     
   } catch (err) {
-    console.error('Erreur lors de la conversion:', err);
+    console.error('Error during conversion:', err);
   }
 }
 
-// Exécuter la conversion
+// Run the conversion
 convertSvgToPng(); 

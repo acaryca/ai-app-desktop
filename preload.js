@@ -1,9 +1,9 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Exposer des API protégées aux pages web
+// Expose protected APIs to web pages
 contextBridge.exposeInMainWorld('electron', {
-  // Fonctions pour communiquer avec le processus principal
+  // Functions to communicate with the main process
   sendMessage: (channel, data) => ipcRenderer.send(channel, data),
   receiveMessage: (channel, func) => {
     ipcRenderer.on(channel, (event, ...args) => func(...args));
@@ -11,23 +11,27 @@ contextBridge.exposeInMainWorld('electron', {
   }
 });
 
-// Exposer l'API electronAPI pour les fonctionnalités spécifiques
+// Expose electronAPI for specific functionalities
 contextBridge.exposeInMainWorld('electronAPI', {
-  // Fonction pour ouvrir une URL dans le navigateur par défaut
+  // Function to open a URL in the default browser
   openInBrowser: (url) => ipcRenderer.send('open-in-browser', url),
-  // Fonction pour déplacer la fenêtre
-  startWindowDrag: () => ipcRenderer.send('window-drag')
+  // Function to move the window
+  startWindowDrag: () => ipcRenderer.send('window-drag'),
+  // Functions for i18n
+  setLanguage: (lang) => ipcRenderer.send('set-language', lang),
+  getCurrentLanguage: () => ipcRenderer.invoke('get-current-language'),
+  getAvailableLanguages: () => ipcRenderer.invoke('get-available-languages')
 });
 
-// Ceci permet de s'assurer que le menu contextuel fonctionne correctement
+// This ensures that the context menu works correctly
 window.addEventListener('contextmenu', (e) => {
-  // Vérifier si le clic droit est sur une image
+  // Check if right-click is on an image
   if (e.target.tagName === 'IMG') {
     
-    // Empêcher le comportement par défaut du clic droit
+    // Prevent default right-click behavior
     e.preventDefault();
     
-    // Envoyer l'URL de l'image au processus principal
+    // Send the image URL to the main process
     ipcRenderer.send('image-context-menu', {
       srcUrl: e.target.src,
       x: e.clientX,
@@ -36,7 +40,7 @@ window.addEventListener('contextmenu', (e) => {
   }
 });
 
-// Fonction d'injection CSS
+// CSS injection function
 function injectGlobalCSS() {
   const css = `
     #acary-drag-handle {
@@ -59,35 +63,35 @@ function injectGlobalCSS() {
   document.head.appendChild(style);
 }
 
-// Ajouter la zone de drag après le chargement du document
+// Add drag zone after document loading
 window.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM chargé, ajout de la zone de drag');
+  console.log('DOM loaded, adding drag zone');
   
-  // Injecter les styles globaux
+  // Inject global styles
   injectGlobalCSS();
   
-  // Créer l'élément pour la zone de drag
+  // Create element for drag zone
   const dragZone = document.createElement('div');
   dragZone.id = 'acary-drag-handle';
   
-  // Ajouter la zone de drag au début du body
+  // Add drag zone to the beginning of body
   document.body.insertBefore(dragZone, document.body.firstChild);
   
-  // S'assurer que la zone reste au premier plan et existe toujours
+  // Ensure the zone stays in the foreground and always exists
   setTimeout(() => {
-    // Vérifier si les styles sont toujours présents
+    // Check if styles are still present
     if (!document.getElementById('acary-drag-style')) {
       injectGlobalCSS();
     }
     
-    // Vérifier si la zone de drag existe encore
+    // Check if drag zone still exists
     if (!document.getElementById('acary-drag-handle')) {
       document.body.insertBefore(dragZone, document.body.firstChild);
     }
   }, 500);
   
-  // Écouter les messages du processus principal
+  // Listen for messages from the main process
   ipcRenderer.on('window-drag-started', () => {
-    console.log('Déplacement de fenêtre commencé');
+    console.log('Window drag started');
   });
 }); 
