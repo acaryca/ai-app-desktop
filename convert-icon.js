@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const svg2png = require('svg2png');
-const toIco = require('to-ico');
+const pngToIco = require('png-to-ico');
 
 // Chemin vers le fichier SVG
 const svgPath = path.join(__dirname, 'assets', 'icon.svg');
@@ -24,6 +24,7 @@ async function convertSvgToPng() {
     // Lire le fichier SVG
     const svgData = fs.readFileSync(svgPath);
     const pngBuffers = [];
+    const pngPaths = [];
     
     // Créer le dossier de sortie s'il n'existe pas
     ensureDirectoryExists(outputDir);
@@ -37,19 +38,23 @@ async function convertSvgToPng() {
       fs.writeFileSync(pngPath, pngBuffer);
       console.log(`Conversion SVG en PNG (${size}x${size}) réussie!`);
       
-      // Ajouter le buffer à la liste pour la création du fichier ICO (seulement les tailles jusqu'à 256)
+      // Ajouter le chemin du fichier à la liste pour la création du fichier ICO (seulement les tailles jusqu'à 256)
       if (size <= 256) {
-        pngBuffers.push(pngBuffer);
+        pngPaths.push(pngPath);
       }
     }
     
     // Créer le fichier ICO à partir des PNG pour Windows
-    const icoBuffer = await toIco(pngBuffers);
-    const icoPath = path.join(outputDir, 'icon.ico');
-    
-    // Écrire le fichier ICO
-    fs.writeFileSync(icoPath, icoBuffer);
-    console.log('Création du fichier ICO réussie!');
+    try {
+      const icoBuffer = await pngToIco(pngPaths);
+      const icoPath = path.join(outputDir, 'icon.ico');
+      
+      // Écrire le fichier ICO
+      fs.writeFileSync(icoPath, icoBuffer);
+      console.log('Création du fichier ICO réussie!');
+    } catch (err) {
+      console.error('Erreur lors de la création du fichier ICO:', err);
+    }
     
     // Copier le fichier de taille 32x32 comme icône principale pour le system tray
     fs.copyFileSync(
