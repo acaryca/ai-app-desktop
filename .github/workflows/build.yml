@@ -13,12 +13,57 @@ jobs:
   update-release:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Get commit history since last release
+        id: commit_history
+        shell: bash
+        run: |
+          # Fetch all tags to ensure we have the complete history
+          git fetch --tags --force
+          
+          # Get the last release tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          # If no previous tag exists or can't be found
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tag found, getting all commits"
+            COMMIT_HISTORY=$(git log --pretty=format:"- %s (%h)" -n 50 | cat)
+          else
+            echo "Found previous tag: $LAST_TAG"
+            # Get commits since last tag to current tag
+            CURRENT_TAG="${{ github.event.release.tag_name }}"
+            echo "Current tag: $CURRENT_TAG"
+            COMMIT_HISTORY=$(git log --pretty=format:"- %s (%h)" "$LAST_TAG..$CURRENT_TAG" | cat)
+            
+            # If no commits found between tags, get recent commits
+            if [ -z "$COMMIT_HISTORY" ]; then
+              echo "No commits found between tags, getting recent commits"
+              COMMIT_HISTORY=$(git log --pretty=format:"- %s (%h)" -n 20 | cat)
+            fi
+          fi
+          
+          echo "COMMIT_HISTORY<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMIT_HISTORY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Update Release with Processing Message
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.release.tag_name }}
           name: ${{ github.event.release.name }}
           body: |
+            ### Build Information
+            - Build Number: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Date: ${{ github.event.release.created_at }}
+            
+            ### Changes
+            ${{ steps.commit_history.outputs.COMMIT_HISTORY }}
+            
             ### Files are being generated...
             
             Please wait while installers are being prepared for all platforms.
