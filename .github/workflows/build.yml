@@ -260,8 +260,6 @@ jobs:
         uses: geekyeggo/delete-artifact@v2
         if: always()
         with:
-          name: |
-            ai-win-app-windows
-            ai-win-app-linux
-            ai-win-app-macos
-          failOnError: false 
+          name: ai-win-app-windows,ai-win-app-linux,ai-win-app-macos
+          failOnError: false
+          useGlob: true 
