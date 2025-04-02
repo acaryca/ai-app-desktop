@@ -1,4 +1,4 @@
-# AI App Tray
+# ai-app-tray
 
 A sleek app that adds an icon to your system tray for instant access to seamless AI chat conversations. Engage effortlessly with cutting-edge AI right at your fingertips!
 
