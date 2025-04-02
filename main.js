@@ -3,6 +3,7 @@ const path = require('path');
 const options = require('./options'); // Import options module
 const { autoUpdater } = require('electron-updater');
 const { I18n } = require('./i18n'); // Import i18n module
+const electronLocalshortcut = require('electron-localshortcut');
 
 // Set application name
 app.name = 'AI';
@@ -522,21 +523,42 @@ function setupShortcuts() {
   let lastReloadTime = 0;
   const RELOAD_COOLDOWN = 500;
 
-  // CTRL+R shortcut to reload the page
-  globalShortcut.register('CommandOrControl+R', () => {
-    if (mainWindow) {
+  // Unregister global shortcut if it was registered before
+  // TODO: Remove this after the next release
+  try {
+    globalShortcut.unregister('CommandOrControl+R');
+  } catch (e) {
+    console.log('No global shortcut was registered');
+  }
+  
+  // Register local shortcut when main window is created
+  const registerLocalShortcut = (window) => {
+    if (!window) return;
+    
+    electronLocalshortcut.register(window, 'CommandOrControl+R', () => {
       const currentTime = Date.now();
       if (currentTime - lastReloadTime >= RELOAD_COOLDOWN) {
-        mainWindow.webContents.reload();
+        window.webContents.reload();
         lastReloadTime = currentTime;
         console.log(i18n.t('logs.pageReloaded'));
       }
-    }
+    });
+  };
+  
+  // If we already have a window, register shortcut for it
+  if (mainWindow) {
+    registerLocalShortcut(mainWindow);
+  }
+  
+  // Listen for new window creation to register shortcut
+  app.on('browser-window-created', (_, window) => {
+    registerLocalShortcut(window);
   });
   
   // Make sure shortcuts are released when the application closes
   app.on('will-quit', () => {
     globalShortcut.unregisterAll();
+    // electron-localshortcut unregisters shortcuts automatically when windows close
   });
 }
 
